@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { ref as vueRef } from 'vue'
 import { useQuasar } from 'quasar'
 import { db, auth } from 'src/boot/firebase'
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithRedirect, getRedirectResult } from "firebase/auth";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithRedirect, signInWithPopup, getRedirectResult } from "firebase/auth";
 import { ref as dbRef, set, get, update } from "firebase/database";
 import { useRouter, useRoute } from 'vue-router';
 import { useCurrentDayStore } from './currentDayStore';
@@ -50,8 +50,6 @@ export const useUsersStore = defineStore('usersStore', () => {
 
             createUserWithEmailAndPassword(auth, payLoad.email, payLoad.password)
                 .then(response => {
-                    localStorage.setItem('user', 'true')
-
                     $q.notify({
                         type: 'positive',
                         iconL: "check_circle",
@@ -114,7 +112,6 @@ export const useUsersStore = defineStore('usersStore', () => {
         if (payLoad.email.trim() && payLoad.password.trim()) {
             signInWithEmailAndPassword(auth, payLoad.email, payLoad.password)
                 .then((response) => {
-                    localStorage.setItem('user', 'true')
                     $q.loading.show()
                 })
                 .catch((error) => {
@@ -142,12 +139,12 @@ export const useUsersStore = defineStore('usersStore', () => {
     }
 
     const firebaseOnAuthStateChanged = () => {
-        const localStorageUser = localStorage.getItem('user')
-        if (localStorageUser) $q.loading.show()
-
         onAuthStateChanged(auth, (user) => {
             if (user) {
+                $q.loading.show()
+
                 const id = user.uid;
+                console.log('user:', user)
 
                 get(dbRef(db, `users/${id}/firebaseUserDetails`)).then(snapshot => {
                     if (snapshot.exists()) {
@@ -169,11 +166,21 @@ export const useUsersStore = defineStore('usersStore', () => {
                         const id = user.uid
 
                         createUser(payLoad, id)
+
+                        userDetails.value.userName = user.displayName
+                        userDetails.value.id = id;
+                        userDetails.value.macronutrients = {
+                            calories: 2010,
+                            carbohydrates: 250,
+                            fats: 50,
+                            proteins: 140
+                        },
+
+                            router.push(`/${id}`);
                     }
                 });
 
             } else {
-                localStorage.removeItem('user')
 
                 userDetails.value.userName = ''
                 userDetails.value.id = ''
@@ -209,10 +216,30 @@ export const useUsersStore = defineStore('usersStore', () => {
 
     const firebaseLoginUserWithGoogle = () => {
         const provider = new GoogleAuthProvider();
+        provider.addScope('https://www.googleapis.com/auth/userinfo.email');
 
-        signInWithRedirect(auth, provider)
+        // signInWithRedirect(auth, provider)
+        signInWithPopup(auth, provider)
+        .then((result) => {
+          // This gives you a Google Access Token. You can use it to access the Google API.
+          const credential = GoogleAuthProvider.credentialFromResult(result);
+          const token = credential.accessToken;
+          // The signed-in user info.
+          const user = result.user;
+          // IdP data available using getAdditionalUserInfo(result)
+          // ...
 
-        localStorage.setItem('user', 'true')
+          console.log(user)
+        }).catch((error) => {
+          // Handle Errors here.
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          // The email of the user's account used.
+          const email = error.customData.email;
+          // The AuthCredential type that was used.
+          const credential = GoogleAuthProvider.credentialFromError(error);
+          // ...
+        });
     }
 
     return {
