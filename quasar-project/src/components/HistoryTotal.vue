@@ -67,6 +67,7 @@
         </q-card-section>
 
         <q-card-actions align="right">
+          <q-btn @click="currentDayStore.showHistoryCharts = true" flat rounded color="primary" icon="show_chart" />
           <q-btn
             flat
             v-close-popup
@@ -75,7 +76,9 @@
             class="text-white bg-red-5"
           />
         </q-card-actions>
+        <HistoryCharts />
       </q-card>
+
     </q-dialog>
 </template>
 
@@ -84,8 +87,8 @@ import { ref, watch } from "vue";
 import { useCurrentDayStore } from "src/stores/currentDayStore";
 import { useQuasar } from "quasar";
 import { customScrollBar } from "src/composables/ScrollBar.js";
+import HistoryCharts from "src/components/HistoryCharts";
 
-// Scroll bar styles
 const { thumbStyle, barStyle } = customScrollBar().useCustomScrollBar();
 
 const $q = useQuasar();

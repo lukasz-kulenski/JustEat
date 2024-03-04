@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ref as vueRef } from 'vue'
+import { ref as vueRef, watch } from 'vue'
 import { uid } from 'quasar'
 import { db } from 'src/boot/firebase'
 import { ref as dbRef, set, get, onChildAdded, onChildChanged, remove, update } from "firebase/database";
@@ -114,16 +114,21 @@ export const useCurrentDayStore = defineStore('currentDayStore', () => {
         return 0;
     };
 
+    const showHistoryCharts = vueRef(false)
+    const historyChartsData = vueRef({})
+    const historyChartsHelpObj = vueRef({})
+    const chartScope = vueRef('Last 30 days')
+
     const loadingHistoryTotal = vueRef(true)
     const firebaseCheckHistoryTotal = () => {
         const userId = getUserId();
-        const historyTotalArray = [];
+        const historyTotal = [];
 
         get(dbRef(db, `users/${userId}/dailies`)).then((snapshot) => {
             snapshot.forEach((data) => {
                 const totalChild = data.child('total');
                 if (totalChild.exists()) {
-                    historyTotalArray.push({
+                    historyTotal.push({
                         date: data.key,
                         total: totalChild.val(),
                     });
@@ -132,13 +137,56 @@ export const useCurrentDayStore = defineStore('currentDayStore', () => {
                 }
             });
 
-            historyTotalArray.sort((a, b) => sortDate(a.date, b.date));
+            historyTotal.sort((b, a) => sortDate(a.date, b.date));
 
-            historyTotalArray.forEach((item) => {
+            historyTotal.forEach((item) => {
+                historyChartsHelpObj.value[item.date] = item.total.calories;
+            });
+
+            historyChartsData.value = Object.fromEntries(
+                Object.entries(historyChartsHelpObj.value).slice(-30)
+            );
+
+            historyTotal.sort((a, b) => sortDate(a.date, b.date));
+
+            historyTotal.forEach((item) => {
                 macronutrientsHistoryTotal.value[item.date] = item.total;
             });
         });
+
     };
+
+    watch(chartScope, (newVal) => {
+        let numberOfDays = 0;
+        historyChartsData.value = {}
+
+        switch (newVal) {
+            case 'Last 30 days':
+                numberOfDays = 30;
+                break;
+            case 'Last 60 days':
+                numberOfDays = 60;
+                break;
+            case 'Last 90 days':
+                numberOfDays = 90;
+                break;
+            case 'Last 180 days':
+                numberOfDays = 180;
+                break;
+            case 'Last 360 days':
+                numberOfDays = 360;
+                break;
+            case 'From The Begining':
+                numberOfDays = Object.keys(historyChartsHelpObj.value).length;
+                break;
+        }
+
+        historyChartsData.value = Object.fromEntries(
+            Object.entries(historyChartsHelpObj.value).slice(-numberOfDays)
+        );
+
+    });
+
     const firebaseDeleteProductFromHistory = (payLoad) => {
         const day = getDay()
         const userId = getUserId()
@@ -182,6 +230,10 @@ export const useCurrentDayStore = defineStore('currentDayStore', () => {
         showHistoryTotal,
         showAddMacronutrientsForm,
         loadingHistoryTotal,
+        historyChartsData,
+        showHistoryCharts,
+        chartScope,
+        historyChartsHelpObj,
         firebaseAddProduct,
         resetDay,
         firebaseCheckHistoryTotal,
