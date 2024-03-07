@@ -53,6 +53,17 @@
       </template>
     </q-input>
 
+    <div class="flex justify-end">
+      <q-btn
+        @click="usersStore.openForgotPasswordDialog"
+        flat
+        rounded
+        no-caps
+        label="Forgot password?"
+        class="text-primary text-body1"
+      />
+    </div>
+
     <div class="column q-gutter-y-md">
       <q-btn
         no-caps
@@ -67,12 +78,14 @@
         {{ props.slideName }} with Google
       </q-btn>
     </div>
+    <ForgotPasswordDialog />
   </q-form>
 </template>
 
 <script setup>
 import { ref, defineProps } from "vue";
 import { useUsersStore } from "src/stores/usersStore";
+import ForgotPasswordDialog from "src/components/ForgotPasswordDialog";
 
 const showPassword = ref(true);
 

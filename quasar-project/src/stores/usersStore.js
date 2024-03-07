@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { ref as vueRef } from 'vue'
 import { useQuasar } from 'quasar'
 import { db, auth } from 'src/boot/firebase'
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithRedirect, signInWithPopup, getRedirectResult } from "firebase/auth";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithRedirect, sendEmailVerification, sendPasswordResetEmail } from "firebase/auth";
 import { ref as dbRef, set, get, update } from "firebase/database";
 import { useRouter, useRoute } from 'vue-router';
 import { useCurrentDayStore } from './currentDayStore';
@@ -50,29 +50,16 @@ export const useUsersStore = defineStore('usersStore', () => {
 
             createUserWithEmailAndPassword(auth, payLoad.email, payLoad.password)
                 .then(response => {
-                    $q.notify({
-                        type: 'positive',
-                        iconL: "check_circle",
-                        message: 'Account created successfully.'
-                    })
-
                     const id = response.user.uid;
 
+                    sendEmailVerification(auth.currentUser).then(() => {
+                        $q.notify({
+                            type: 'positive',
+                            message: 'Verify email address before logging in.'
+                        })
+                    })
+
                     createUser(payLoad, id)
-
-                    userDetails.value = {
-                        userName: payLoad.name,
-                        macronutrients: {
-                            calories: 2010,
-                            carbohydrates: 250,
-                            fats: 50,
-                            proteins: 140
-                        },
-                        id: id,
-                    }
-
-                    $q.loading.show()
-                    router.push(`/${id}`)
                 })
                 .catch((error) => {
                     const errorCode = error.code;
@@ -111,11 +98,21 @@ export const useUsersStore = defineStore('usersStore', () => {
     const firebaseLoginUser = (payLoad) => {
         if (payLoad.email.trim() && payLoad.password.trim()) {
             signInWithEmailAndPassword(auth, payLoad.email, payLoad.password)
-                .then((response) => {
-                    $q.loading.show()
+                .then((userCredential) => {
+                    const id = userCredential.user.uid
+
+                    if (!userCredential.user.emailVerified) {
+                        $q.notify({
+                            type: 'negative',
+                            message: 'Verify your email address.'
+                        })
+                    } else {
+                        userDetails.value.id = id
+                    }
                 })
                 .catch((error) => {
                     const errorCode = error.code
+
                     if (errorCode == 'auth/invalid-email') {
                         $q.notify({
                             type: 'negative',
@@ -123,7 +120,7 @@ export const useUsersStore = defineStore('usersStore', () => {
                             message: 'Invalid email.'
                         })
                     }
-                    if (errorCode == 'auth/invalid-login-credentials') {
+                    if (errorCode == 'auth/invalid-credential') {
                         $q.notify({
                             type: 'negative',
                             iconL: "warning",
@@ -141,45 +138,47 @@ export const useUsersStore = defineStore('usersStore', () => {
     const firebaseOnAuthStateChanged = () => {
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                $q.loading.show()
-
                 const id = user.uid;
 
-                get(dbRef(db, `users/${id}/firebaseUserDetails`)).then(snapshot => {
-                    if (snapshot.exists()) {
-                        const userData = snapshot.val();
+                if (user.emailVerified || user.providerData[0].providerId == 'google.com') {
+                    $q.loading.show()
+                    get(dbRef(db, `users/${id}/firebaseUserDetails`)).then(snapshot => {
+                        if (snapshot.exists()) {
+                            const userData = snapshot.val();
 
-                        if (userData) {
-                            userDetails.value.userName = userData.name;
-                            userDetails.value.macronutrients = userData.macronutrients;
-                            userDetails.value.id = id;
-                        }
-
-                        router.push(`/${id}`);
-                    } else {
-                        const payLoad = {
-                            name: user.displayName,
-                            email: user.email
-                        }
-
-                        const id = user.uid
-
-                        createUser(payLoad, id)
-
-                        userDetails.value.userName = user.displayName
-                        userDetails.value.id = id;
-                        userDetails.value.macronutrients = {
-                            calories: 2010,
-                            carbohydrates: 250,
-                            fats: 50,
-                            proteins: 140
-                        },
+                            if (userData) {
+                                userDetails.value.userName = userData.name;
+                                userDetails.value.macronutrients = userData.macronutrients;
+                                userDetails.value.id = id;
+                            }
 
                             router.push(`/${id}`);
-                    }
-                });
+                        } else {
+                            const payLoad = {
+                                name: user.displayName,
+                                email: user.email
+                            }
+
+                            const id = user.uid
+
+                            createUser(payLoad, id)
+
+                            userDetails.value.userName = user.displayName
+                            userDetails.value.id = id;
+                            userDetails.value.macronutrients = {
+                                calories: 2010,
+                                carbohydrates: 250,
+                                fats: 50,
+                                proteins: 140
+                            },
+
+                                router.push(`/${id}`);
+                        }
+                    });
+                }
 
             } else {
+
 
                 userDetails.value.userName = ''
                 userDetails.value.id = ''
@@ -220,6 +219,32 @@ export const useUsersStore = defineStore('usersStore', () => {
         signInWithRedirect(auth, provider)
     }
 
+    const forgotPasswordDialog = vueRef(false)
+    const openForgotPasswordDialog = () => {
+        forgotPasswordDialog.value = true
+    }
+
+    const emailAddress = vueRef('')
+    const handleForgotPassword = () => {
+        sendPasswordResetEmail(auth, emailAddress.value).then(() => {
+            $q.notify({
+                type: 'positive',
+                message: 'Password reset link sent.'
+            })
+
+            emailAddress.value = ''
+        }).catch((error) => {
+            const errorCode = error.code
+
+            if (errorCode == 'auth/invalid-email') {
+                $q.notify({
+                    type: 'negative',
+                    message: "Invalid email"
+                })
+            }
+        })
+    }
+
     return {
         userDetails,
         showMacronutrientsForm,
@@ -229,5 +254,9 @@ export const useUsersStore = defineStore('usersStore', () => {
         firebaseOnAuthStateChanged,
         firebaseChangeMacronutrients,
         firebaseLoginUserWithGoogle,
+        forgotPasswordDialog,
+        openForgotPasswordDialog,
+        handleForgotPassword,
+        emailAddress,
     }
 });
