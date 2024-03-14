@@ -181,7 +181,7 @@
       >
     </q-footer>
 
-    <q-page-container>
+    <q-page-container class="q-pa-sm">
       <router-view />
     </q-page-container>
   </q-layout>
@@ -229,13 +229,11 @@ const searchProduct = (e) => {
   productStore.searchProductContent = searchProductContent.value;
 };
 
-// Display the user's history from the beginning
 const checkHistory = () => {
-  currentDayStore.showHistoryTotal = true;
   currentDayStore.firebaseCheckHistoryTotal();
+  currentDayStore.showHistoryTotal = true;
 };
 
-// Clear the search bar when the user logs in or switches to a different user.
 watch(route, (newVal) => {
   if (newVal.params.userId != undefined) {
     searchProductContent.value = "";

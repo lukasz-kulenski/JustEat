@@ -108,7 +108,7 @@
       transition-show="scale"
       transition-hide="scale"
     >
-      <q-card class="bg-white q-pa-sm" style="max-width: max-content">
+      <q-card class="bg-white q-pa-sm" style="min-width: 300px;">
         <q-card-section>
           <q-list>
             <q-item>
@@ -189,18 +189,22 @@
 
         <q-card-actions align="center">
           <q-btn
-            @click="addProductToFirebase"
-            flat
-            no-caps
-            label="Add Product"
-            class="text-white bg-primary"
-          />
-          <q-btn
             flat
             v-close-popup
             no-caps
             label="Close"
-            class="text-white bg-red-5"
+            padding="6px 30px"
+            class="text-white bg-red-6"
+          />
+
+          <q-btn
+            @click="addProductToFirebase"
+            flat
+            no-caps
+            v-close-popup
+            label="Add"
+            padding="6px 30px"
+            class="text-white bg-primary"
           />
         </q-card-actions>
       </q-card>
@@ -215,7 +219,6 @@ import axios from "axios";
 import { customScrollBar } from "src/composables/ScrollBar.js";
 import { useQuasar } from "quasar";
 
-// Scroll bar styles
 const { thumbStyle, barStyle } = customScrollBar().useCustomScrollBar();
 
 const $q = useQuasar();
@@ -226,7 +229,6 @@ const searchProductContent = ref("");
 const productDatabaseItems = ref([]);
 const loadingProducts = ref(false);
 
-// Use the Nutrition Ninjas API to retrieve macronutrients information for the product
 const searchProductFromProductDatabase = async () => {
   loadingProducts.value = true;
   const apiKey = "Iwe6s0snYLMbLTASHAxxzg==sKHY56WZfB89IZsK";
@@ -250,7 +252,6 @@ const getMoreInformationAboutProduct = (item) => {
   showSelectedProduct.value = true;
 };
 
-// Check if the product is already added, if not, add it to the database 
 const addProductToFirebase = () => {
   let checkProduct = 1;
 

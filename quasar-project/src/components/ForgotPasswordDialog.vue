@@ -16,11 +16,20 @@
       </q-card-section>
 
       <q-card-actions align="right" class="text-primary">
-        <q-btn flat no-caps label="Cancel" color="red" v-close-popup />
+        <q-btn
+          no-caps
+          v-close-popup
+          class="bg-red-6 text-white"
+          padding="6px 30px"
+          label="Close"
+        />
+
         <q-btn
           @click="usersStore.handleForgotPassword"
           flat
           no-caps
+          class="bg-primary text-white"
+          padding="6px 30px"
           label="Reset password"
           v-close-popup
         />

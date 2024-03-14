@@ -11,7 +11,7 @@ const routes = [
     children:
       [
         {
-          path: ':userId',
+          path: '/',
           component: HomePage,
           name: 'HomePage',
         },

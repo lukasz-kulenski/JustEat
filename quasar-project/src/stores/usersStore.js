@@ -3,7 +3,7 @@ import { ref as vueRef } from 'vue'
 import { useQuasar } from 'quasar'
 import { db, auth } from 'src/boot/firebase'
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithRedirect, sendEmailVerification, sendPasswordResetEmail } from "firebase/auth";
-import { ref as dbRef, set, get, update } from "firebase/database";
+import { ref as dbRef, set, get, update, onChildChanged } from "firebase/database";
 import { useRouter, useRoute } from 'vue-router';
 import { useCurrentDayStore } from './currentDayStore';
 import { useProductStore } from './productStore';
@@ -30,6 +30,8 @@ export const useUsersStore = defineStore('usersStore', () => {
 
     const showMacronutrientsForm = vueRef(false)
 
+    const getUserId = () => { return userDetails.value.id }
+
     const createUser = (payLoad, id) => {
         set(dbRef(db, `users/${id}`), {
             firebaseUserDetails: {
@@ -40,9 +42,15 @@ export const useUsersStore = defineStore('usersStore', () => {
                     carbohydrates: 250,
                     fats: 50,
                     proteins: 140
-                }
+                },
+                averageCalories: {
+                    weekly: 0,
+                    monthly: 0,
+                    yearly: 0,
+                },
             }
         })
+
     }
 
     const firebaseRegisterUser = (payLoad) => {
@@ -89,7 +97,6 @@ export const useUsersStore = defineStore('usersStore', () => {
         } else {
             $q.notify({
                 type: 'negative',
-                iconL: "warning",
                 message: 'Fill in all fields.'
             })
         }
@@ -128,11 +135,24 @@ export const useUsersStore = defineStore('usersStore', () => {
                         })
                     }
                 });
+        } else {
+            $q.notify({
+                type: 'negative',
+                message: 'Fill in all fields.'
+            })
         }
     }
 
     const firebaseLogoutUser = () => {
         signOut(auth)
+    }
+
+    const firebaseGetUserAverageCalories = () => {
+        const userId = getUserId()
+
+        onChildChanged(dbRef(db, `users/${userId}/firebaseUserDetails/averageCalories`), snapshot => {
+            userDetails.value.averageCalories[snapshot.key] = snapshot.val()
+        })
     }
 
     const firebaseOnAuthStateChanged = () => {
@@ -150,9 +170,11 @@ export const useUsersStore = defineStore('usersStore', () => {
                                 userDetails.value.userName = userData.name;
                                 userDetails.value.macronutrients = userData.macronutrients;
                                 userDetails.value.id = id;
+                                userDetails.value.averageCalories = userData.averageCalories
                             }
 
-                            router.push(`/${id}`);
+                            router.push(`/`);
+                            firebaseGetUserAverageCalories()
                         } else {
                             const payLoad = {
                                 name: user.displayName,
@@ -163,30 +185,38 @@ export const useUsersStore = defineStore('usersStore', () => {
 
                             createUser(payLoad, id)
 
-                            userDetails.value.userName = user.displayName
-                            userDetails.value.id = id;
-                            userDetails.value.macronutrients = {
-                                calories: 2010,
-                                carbohydrates: 250,
-                                fats: 50,
-                                proteins: 140
-                            },
+                            userDetails.value = {
+                                userName: user.displayName,
+                                id: id,
+                                macronutrients: {
+                                    calories: 2010,
+                                    carbohydrates: 250,
+                                    fats: 50,
+                                    proteins: 140
+                                },
+                                averageCalories: {
+                                    weekly: 0,
+                                    monthly: 0,
+                                    yearly: 0,
+                                },
+                            }
 
-                                router.push(`/${id}`);
+                            router.push(`/`);
+                            firebaseGetUserAverageCalories()
                         }
                     });
                 }
 
             } else {
-
-
-                userDetails.value.userName = ''
-                userDetails.value.id = ''
-                userDetails.value.macronutrients = {
-                    calories: 0,
-                    proteins: 0,
-                    fats: 0,
-                    carbohydrates: 0,
+                userDetails.value = {
+                    userName: '',
+                    id: '',
+                    macronutrients: {
+                        calories: 0,
+                        proteins: 0,
+                        fats: 0,
+                        carbohydrates: 0,
+                    },
                 }
 
                 productStore.products = {}
@@ -208,7 +238,7 @@ export const useUsersStore = defineStore('usersStore', () => {
     };
 
     const firebaseChangeMacronutrients = () => {
-        const id = route.params.userId
+        const id = getUserId()
         update(dbRef(db, `users/${id}/firebaseUserDetails/macronutrients`), userDetails.value.macronutrients)
     }
 

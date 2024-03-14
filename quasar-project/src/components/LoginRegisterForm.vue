@@ -1,7 +1,7 @@
 <template>
   <q-form class="q-gutter-md">
     <q-input
-      v-show="props.slideName == 'Register'"
+      v-show="props.tab == 'Register'"
       outlined
       rounded
       dense
@@ -68,14 +68,14 @@
       <q-btn
         no-caps
         @click.prevent="submitForm"
-        :label="props.slideName"
+        :label="props.tab"
         type="submit"
         color="primary"
       />
 
       <q-btn @click="handleGoogle" no-caps>
         <img src="../assets/googleLogo.png" class="q-mr-md" />
-        {{ props.slideName }} with Google
+        {{ props.tab }} with Google
       </q-btn>
     </div>
     <ForgotPasswordDialog />
@@ -90,7 +90,7 @@ import ForgotPasswordDialog from "src/components/ForgotPasswordDialog";
 const showPassword = ref(true);
 
 const props = defineProps({
-  slideName: String,
+  tab: String,
 });
 
 const formData = ref({
@@ -102,12 +102,14 @@ const formData = ref({
 const usersStore = useUsersStore();
 
 const submitForm = () => {
-  if (props.slideName == "Register")
+  if (props.tab == "Register") {
     usersStore.firebaseRegisterUser(formData.value);
-  else usersStore.firebaseLoginUser(formData.value);
+  } else {
+    usersStore.firebaseLoginUser(formData.value);
+  }
 };
 
-const handleGoogle = (e) => {
+const handleGoogle = () => {
   usersStore.firebaseLoginUserWithGoogle();
 };
 </script>

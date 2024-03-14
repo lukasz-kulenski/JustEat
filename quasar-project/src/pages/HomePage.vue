@@ -8,14 +8,6 @@
       label-style="font-size: 1.1em"
     />
 
-    <transition
-      appear
-      enter-active-class="animated fadeIn"
-      leave-active-class="animated fadeOut"
-    >
-      <NewProductForm v-show="productStore.showProductForm" />
-    </transition>
-
     <div
       v-show="
         Object.keys(productStore.products).length &&
@@ -42,6 +34,7 @@
     <ChangeMacronutrientsForm />
     <AddMacronutrientsForm />
     <ProductDatabase />
+    <NewProductForm />
   </q-page>
 </template>
 
@@ -68,7 +61,6 @@ const usersStore = useUsersStore();
 const currentDayStore = useCurrentDayStore();
 const productStore = useProductStore();
 
-// Hide the loading component once products are loaded
 watch(productStore.products, (newVal) => {
   if (newVal) {
     productStore.loadingProducts = false;

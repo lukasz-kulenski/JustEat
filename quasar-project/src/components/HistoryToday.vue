@@ -81,7 +81,6 @@ import { useCurrentDayStore } from "src/stores/currentDayStore";
 import { useQuasar } from "quasar";
 import { customScrollBar } from "src/composables/ScrollBar.js";
 
-// Scroll bar styles
 const { thumbStyle, barStyle } = customScrollBar().useCustomScrollBar();
 
 const $q = useQuasar();

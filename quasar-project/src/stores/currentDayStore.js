@@ -5,6 +5,7 @@ import { db } from 'src/boot/firebase'
 import { ref as dbRef, set, get, onChildAdded, onChildChanged, remove, update } from "firebase/database";
 import { useRoute } from 'vue-router';
 import { format } from "date-fns";
+import { useUsersStore } from './usersStore';
 
 export const useCurrentDayStore = defineStore('currentDayStore', () => {
 
@@ -24,7 +25,9 @@ export const useCurrentDayStore = defineStore('currentDayStore', () => {
 
     const route = useRoute()
 
-    const getUserId = () => { return route.params.userId }
+    const userStore = useUsersStore()
+
+    const getUserId = () => { return userStore.userDetails.id }
 
     const getDay = () => {
         let d = new Date()
@@ -114,7 +117,7 @@ export const useCurrentDayStore = defineStore('currentDayStore', () => {
         return 0;
     };
 
-    const showHistoryCharts = vueRef(false)
+    const showStatistics = vueRef(false)
     const historyChartsData = vueRef({})
     const historyChartsHelpObj = vueRef({})
     const chartScope = vueRef('Last 30 days')
@@ -125,17 +128,19 @@ export const useCurrentDayStore = defineStore('currentDayStore', () => {
         const historyTotal = [];
 
         get(dbRef(db, `users/${userId}/dailies`)).then((snapshot) => {
-            snapshot.forEach((data) => {
-                const totalChild = data.child('total');
-                if (totalChild.exists()) {
-                    historyTotal.push({
-                        date: data.key,
-                        total: totalChild.val(),
-                    });
-                } else {
-                    loadingHistoryTotal.value = false
-                }
-            });
+            if (snapshot.exists()) {
+                snapshot.forEach((data) => {
+                    const totalChild = data.child('total');
+                    if (totalChild.exists()) {
+                        historyTotal.push({
+                            date: data.key,
+                            total: totalChild.val(),
+                        });
+                    }
+                });
+            } else {
+                loadingHistoryTotal.value = false
+            }
 
             historyTotal.sort((b, a) => sortDate(a.date, b.date));
 
@@ -152,8 +157,9 @@ export const useCurrentDayStore = defineStore('currentDayStore', () => {
             historyTotal.forEach((item) => {
                 macronutrientsHistoryTotal.value[item.date] = item.total;
             });
-        });
 
+            calculateAverageCalories(historyTotal)
+        });
     };
 
     watch(chartScope, (newVal) => {
@@ -222,6 +228,53 @@ export const useCurrentDayStore = defineStore('currentDayStore', () => {
         update(dbRef(db, `users/${userId}/dailies/${day}/total`), macronutrients.value)
     }
 
+    const weeklyAverageCalories = vueRef(0)
+    const monthlyAverageCalories = vueRef(0)
+    const yearlyAverageCalories = vueRef(0)
+
+    const calculateAverageCalories = (historyTotal) => {
+        if (historyTotal.length) {
+            const averages = {
+                weekly: [],
+                monthly: [],
+                yearly: [],
+            }
+
+            averages.weekly = historyTotal.slice(0, 7).map(item => item.total.calories)
+            averages.monthly = historyTotal.slice(0, 30).map(item => item.total.calories)
+            averages.yearly = historyTotal.slice(0, 365).map(item => item.total.calories)
+
+            const calculateAverage = (arr, ref) => {
+                let sum = 0
+
+                arr.forEach(item => {
+                    sum += item
+                })
+
+                ref.value = (sum / arr.length).toFixed(1)
+            }
+
+            calculateAverage(averages.weekly, weeklyAverageCalories)
+            calculateAverage(averages.monthly, monthlyAverageCalories)
+            calculateAverage(averages.yearly, yearlyAverageCalories)
+
+            const userId = getUserId()
+            set(dbRef(db, `users/${userId}/firebaseUserDetails/averageCalories/weekly`), weeklyAverageCalories.value)
+            set(dbRef(db, `users/${userId}/firebaseUserDetails/averageCalories/monthly`), monthlyAverageCalories.value)
+            set(dbRef(db, `users/${userId}/firebaseUserDetails/averageCalories/yearly`), yearlyAverageCalories.value)
+
+        } else {
+            const userId = getUserId()
+
+            update(dbRef(db, `users/${userId}/firebaseUserDetails/averageCalories`), {
+                weekly: 0,
+                monthly: 0,
+                yearly: 0,
+            })
+        }
+
+    }
+
     return {
         macronutrients,
         macronutrientsHistory,
@@ -231,7 +284,7 @@ export const useCurrentDayStore = defineStore('currentDayStore', () => {
         showAddMacronutrientsForm,
         loadingHistoryTotal,
         historyChartsData,
-        showHistoryCharts,
+        showStatistics,
         chartScope,
         historyChartsHelpObj,
         firebaseAddProduct,
@@ -240,5 +293,6 @@ export const useCurrentDayStore = defineStore('currentDayStore', () => {
         firebaseGetProducts,
         firebaseDeleteProductFromHistory,
         firebaseAddMacronutrients,
+        calculateAverageCalories,
     }
 });

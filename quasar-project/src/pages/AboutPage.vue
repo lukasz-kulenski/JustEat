@@ -122,6 +122,7 @@ const aboutItems = ref([
     answer: "email: lukasz.kulenski17@op.pl",
   },
 ]);
+
 const instructionsButtons = ref([
   {
     buttonName: "Add a New Product",
@@ -154,6 +155,7 @@ const instructionsButtons = ref([
     buttonFunction: "sing out of your account.",
   },
 ]);
+
 const otherInstructions = ref([
   {
     optionName: "Search Field",
@@ -167,12 +169,11 @@ const otherInstructions = ref([
 
 const tab = ref("about");
 
-// Set sizes for the about component based on the user's device
 const aboutScrollBarSizes = computed(() => {
-  if ($q.screen.height > 799) {
-    return "height: 85vh; width: 100%";
+  if ($q.screen.height > 670) {
+    return "height: 83dvh; width: 100%";
   } else {
-    return "  height: 80vh; width: 100%";
+    return "  height: 80dvh; width: 100%";
   }
 });
 </script>

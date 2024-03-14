@@ -4,6 +4,7 @@ import { uid } from 'quasar'
 import { db } from 'src/boot/firebase'
 import { ref as dbRef, set, onChildAdded, onChildChanged, remove, get } from "firebase/database";
 import { useRoute } from 'vue-router';
+import { useUsersStore } from './usersStore';
 
 export const useProductStore = defineStore('productStore', () => {
 
@@ -14,7 +15,9 @@ export const useProductStore = defineStore('productStore', () => {
 
   const route = useRoute()
 
-  const getUserId = () => { return route.params.userId }
+  const userStore = useUsersStore()
+
+  const getUserId = () => { return userStore.userDetails.id }
 
   const firebaseAddNewProduct = (payLoad) => {
     if (payLoad.name.trim()) {
@@ -33,6 +36,7 @@ export const useProductStore = defineStore('productStore', () => {
   const loadingProducts = vueRef(true)
   const firebaseGetProducts = () => {
     const userId = getUserId()
+
     onChildAdded(dbRef(db, `users/${userId}/products`), snapshot => {
       products.value[snapshot.key] = snapshot.val()
     })
@@ -45,7 +49,6 @@ export const useProductStore = defineStore('productStore', () => {
       if (!snapshot.exists()) {
         loadingProducts.value = false
       }
-
     })
   }
 

@@ -1,41 +1,31 @@
 <template>
   <q-page class="q-pa-sm">
-    <div class="row justify-center">
-      <q-btn-toggle
-        v-model="slide"
-        spread
-        rounded
-        unelevated
-        no-caps
-        class="custom-toggle full-width"
-        toggle-color="primary"
-        color="white"
-        text-color="primary"
-        :options="[
-          { label: 'Login', value: 'Login' },
-          { label: 'Register', value: 'Register' },
-        ]"
-      />
-    </div>
+    <q-card>
+      <q-tabs
+        v-model="tab"
+        dense
+        class="text-grey"
+        active-color="primary"
+        indicator-color="primary"
+        align="justify"
+        narrow-indicator
+      >
+        <q-tab name="Login" label="Login" />
+        <q-tab name="Register" label="Register" />
+      </q-tabs>
 
-    <q-carousel
-      v-model="slide"
-      swipeable
-      animated
-      class="q-mt-md shadow-1 text-black rounded-borders"
-      style="height: max-content"
-    >
-      <q-carousel-slide name="Login" class="column no-wrap flex-center">
-        <div class="full-width">
-          <LoginRegisterForm :slideName="slide" />
-        </div>
-      </q-carousel-slide>
-      <q-carousel-slide name="Register" class="column no-wrap flex-center">
-        <div class="full-width">
-          <LoginRegisterForm :slideName="slide" />
-        </div>
-      </q-carousel-slide>
-    </q-carousel>
+      <q-separator />
+
+      <q-tab-panels v-model="tab" animated>
+        <q-tab-panel name="Login">
+          <LoginRegisterForm :tab="tab" />
+        </q-tab-panel>
+
+        <q-tab-panel name="Register">
+          <LoginRegisterForm :tab="tab" />
+        </q-tab-panel>
+      </q-tab-panels>
+    </q-card>
   </q-page>
 </template>
 <script setup>
@@ -44,7 +34,7 @@ import LoginRegisterForm from "../components/LoginRegisterForm.vue";
 import { useUsersStore } from "src/stores/usersStore";
 import { useRouter } from "vue-router";
 
-const slide = ref("Login");
+const tab = ref("Login");
 
 const router = useRouter();
 
@@ -53,7 +43,7 @@ const usersStore = useUsersStore();
 onMounted(() => {
   const userId = usersStore.userDetails.id;
 
-  if (userId) router.push(`/${userId}`);
+  if (userId) router.push(`/`);
 });
 </script>
 
