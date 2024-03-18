@@ -92,7 +92,7 @@
 
             <q-item clickable v-close-popup @click="router.push('/about')">
               <q-item-section>
-                <q-item-label>App Information</q-item-label>
+                <q-item-label>App Information & Guide</q-item-label>
               </q-item-section>
             </q-item>
 

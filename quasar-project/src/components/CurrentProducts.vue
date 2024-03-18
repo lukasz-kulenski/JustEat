@@ -4,7 +4,7 @@
       :thumb-style="thumbStyle"
       :bar-style="barStyle"
       class="q-pa-md"
-      style="width: 100%;"
+      style="width: 100%"
       :style="$q.screen.height > 670 ? 'height: 85dvh;' : 'height: 80dvh;'"
     >
       <q-list
@@ -17,7 +17,9 @@
       >
         <div class="flex items-center justify-between">
           <q-item-label header>Name</q-item-label>
-          <q-item-label header class="gt-xs">Calories per 100g</q-item-label>
+          <q-item-label header class="gt-xs"
+            >Calories per 100g / 1 piece</q-item-label
+          >
           <q-item-label header>Options</q-item-label>
         </div>
         <q-separator />
@@ -92,20 +94,23 @@ const productStore = useProductStore();
 const currentDayStore = useCurrentDayStore();
 
 const filteredProducts = ref({});
-watch(() => productStore.searchProductContent, (newVal) => {
-  if (newVal) {
-    filteredProducts.value = {};
-    Object.keys(productStore.products).forEach((key) => {
-      if (
-        productStore.products[key].name
-          .toLowerCase()
-          .includes(newVal.toLowerCase().trim())
-      ) {
-        filteredProducts.value[key] = productStore.products[key];
-      }
-    });
+watch(
+  () => productStore.searchProductContent,
+  (newVal) => {
+    if (newVal) {
+      filteredProducts.value = {};
+      Object.keys(productStore.products).forEach((key) => {
+        if (
+          productStore.products[key].name
+            .toLowerCase()
+            .includes(newVal.toLowerCase().trim())
+        ) {
+          filteredProducts.value[key] = productStore.products[key];
+        }
+      });
+    }
   }
-});
+);
 
 const showProduct = (product) => {
   $q.dialog({
@@ -124,10 +129,12 @@ const showProduct = (product) => {
 const addProduct = (id) => {
   $q.dialog({
     dark: true,
-    message: "Enter Quantity (grams)",
+    message: "Enter Quantity (grams / pieces)",
     prompt: {
       model: "",
       type: "number",
+      step: 0.1,
+      min: 0.1,
     },
     cancel: {
       push: true,

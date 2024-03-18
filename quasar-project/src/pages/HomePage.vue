@@ -34,14 +34,14 @@
     <ChangeMacronutrientsForm />
     <AddMacronutrientsForm />
     <ProductDatabase />
-    <NewProductForm />
+    <NewProductContainer />
   </q-page>
 </template>
 
 <script setup>
 import { onMounted, watch } from "vue";
 import { useQuasar } from "quasar";
-import NewProductForm from "src/components/NewProductForm";
+import NewProductContainer from "src/components/NewProductContainer";
 import CurrentProducts from "src/components/CurrentProducts";
 import ProductDatabase from "src/components/ProductDatabase";
 import HistoryToday from "src/components/HistoryToday";

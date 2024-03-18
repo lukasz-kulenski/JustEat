@@ -1,123 +1,87 @@
 <template>
-  <div class="row">
-    <q-dialog v-model="productStore.showProductForm">
-      <q-card style="min-width: 350px" class="q-pa-md">
-        <q-form
-          @submit="addNewProduct"
-          @keyup.enter="addNewProduct"
-          class="q-gutter-sm"
-        >
-          <q-input
-            outlined
-            v-model="newProduct.name"
-            type="text"
-            placeholder="Name of the Product"
-            dense
-          />
+  <div>
+    <q-form
+      @submit="addNewProduct"
+      @keyup.enter="addNewProduct"
+      class="q-gutter-sm q-mt-xl"
+    >
+      <q-input
+        outlined
+        v-model="productStore.newProduct.name"
+        type="text"
+        placeholder="Name of the product"
+        dense
+      />
 
-          <q-input
-            outlined
-            v-model.number="newProduct.calories"
-            type="number"
-            placeholder="Calories per 100g of Product"
-            dense
-            step="0.1"
-          />
+      <q-input
+        outlined
+        v-model.number="productStore.newProduct.calories"
+        type="number"
+        :placeholder="
+          tab == 'Grams'
+            ? 'Calories per 100g of Product'
+            : 'Calories per 1 piece of product'
+        "
+        dense
+        step="0.1"
+      />
 
-          <q-input
-            outlined
-            dense
-            step="0.1"
-            v-model.number="newProduct.proteins"
-            type="number"
-            placeholder="Protein per 100g of Product"
-          />
+      <q-input
+        outlined
+        dense
+        step="0.1"
+        v-model.number="productStore.newProduct.proteins"
+        type="number"
+        :placeholder="
+          tab == 'Grams'
+            ? 'Protein per 100g of Product'
+            : 'Protein per 1 piece of product'
+        "
+      />
 
-          <q-input
-            outlined
-            v-model.number="newProduct.fats"
-            type="number"
-            placeholder="Fat per 100g of Product"
-            dense
-            step="0.1"
-          />
+      <q-input
+        outlined
+        v-model.number="productStore.newProduct.fats"
+        type="number"
+        :placeholder="
+          tab == 'Grams'
+            ? 'Fat per 100g of Product'
+            : 'Fat per 1 piece of product'
+        "
+        dense
+        step="0.1"
+      />
 
-          <q-input
-            outlined
-            v-model.number="newProduct.carbohydrates"
-            type="number"
-            placeholder="Carbohydrates per 100g of Product"
-            dense
-            step="0.1"
-          />
-        </q-form>
-
-        <q-card-actions class="flex justify-end">
-          <q-btn
-            flat
-            no-caps
-            v-close-popup
-            padding="6px 30px"
-            label="Close"
-            class="bg-red-6 text-white"
-          />
-
-          <q-btn
-            @click="addNewProduct()"
-            flat
-            no-caps
-            v-close-popup
-            padding="6px 30px"
-            label="Add"
-            type="submit"
-            class="bg-primary text-white"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+      <q-input
+        outlined
+        v-model.number="productStore.newProduct.carbohydrates"
+        type="number"
+        :placeholder="
+          tab == 'Grams'
+            ? 'Carbohydrates per 100g of Product'
+            : 'Carbohydrates per 1 piece of product'
+        "
+        dense
+        step="0.1"
+      />
+    </q-form>
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { defineProps } from "vue";
 import { useProductStore } from "src/stores/productStore";
-import { useQuasar } from "quasar";
 
-const $q = useQuasar()
+const props = defineProps({
+  tab: String,
+});
 
 const productStore = useProductStore();
 
-const newProduct = ref({
-  name: "",
-  calories: null,
-  proteins: null,
-  fats: null,
-  carbohydrates: null,
-});
-
 const addNewProduct = () => {
-  if (
-    !newProduct.value.name ||
-    !newProduct.value.calories ||
-    !newProduct.value.fats ||
-    !newProduct.value.proteins ||
-    !newProduct.value.carbohydrates
-  ) {
-    $q.notify({
-      type: "negative",
-      message: "Fiil in all fields.",
-    });
+  if(props.tab == 'Grams') productStore.newProduct.units = 'grams'
+  else productStore.newProduct.units = 'pieces'
 
-    return;
-  }
-
-  productStore.firebaseAddNewProduct(newProduct.value);
-  newProduct.value = {
-    name: "",
-    calories: null,
-    proteins: null,
-    fats: null,
-    carbohydrates: null,
-  };
-};
+  productStore.firebaseAddNewProduct()
+}
 </script>

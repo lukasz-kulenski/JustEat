@@ -44,10 +44,14 @@ export const useCurrentDayStore = defineStore('currentDayStore', () => {
             }
 
             Object.keys(payLoad).forEach((property) => {
-                if (property != 'name') {
-                    macronutrients.value[property] += payLoad[property] * (quantity / 100);
-                    macronutrients.value[property] = roundToTwoDecimalPlaces(macronutrients.value[property]);
-
+                if (property != 'name' || property != 'units') {
+                    if (payLoad.units == 'pieces') {
+                        macronutrients.value[property] += payLoad[property] * quantity;
+                        macronutrients.value[property] = roundToTwoDecimalPlaces(macronutrients.value[property]);
+                    } else {
+                        macronutrients.value[property] += payLoad[property] * (quantity / 100);
+                        macronutrients.value[property] = roundToTwoDecimalPlaces(macronutrients.value[property]);
+                    }
                 }
             });
 
@@ -59,14 +63,30 @@ export const useCurrentDayStore = defineStore('currentDayStore', () => {
             })
 
             const id = uid()
-            set(dbRef(db, `users/${userId}/dailies/${day}/history/${id}`), {
-                calories: roundToTwoDecimalPlaces(payLoad.calories * (quantity / 100)),
-                proteins: roundToTwoDecimalPlaces(payLoad.proteins * (quantity / 100)),
-                fats: roundToTwoDecimalPlaces(payLoad.fats * (quantity / 100)),
-                carbohydrates: roundToTwoDecimalPlaces(payLoad.carbohydrates * (quantity / 100)),
-                quantity: quantity,
-                name: payLoad.name,
-            })
+
+            console.log(payLoad)
+
+            if (payLoad.units == 'pieces') {
+                set(dbRef(db, `users/${userId}/dailies/${day}/history/${id}`), {
+                    calories: roundToTwoDecimalPlaces(payLoad.calories * quantity),
+                    proteins: roundToTwoDecimalPlaces(payLoad.proteins * quantity),
+                    fats: roundToTwoDecimalPlaces(payLoad.fats * quantity),
+                    carbohydrates: roundToTwoDecimalPlaces(payLoad.carbohydrates * quantity),
+                    quantity: quantity,
+                    name: payLoad.name,
+                    units: 'pieces'
+                })
+            } else {
+                set(dbRef(db, `users/${userId}/dailies/${day}/history/${id}`), {
+                    calories: roundToTwoDecimalPlaces(payLoad.calories * (quantity / 100)),
+                    proteins: roundToTwoDecimalPlaces(payLoad.proteins * (quantity / 100)),
+                    fats: roundToTwoDecimalPlaces(payLoad.fats * (quantity / 100)),
+                    carbohydrates: roundToTwoDecimalPlaces(payLoad.carbohydrates * (quantity / 100)),
+                    quantity: quantity,
+                    name: payLoad.name,
+                    units: 'grams'
+                })
+            }
         }
     }
 

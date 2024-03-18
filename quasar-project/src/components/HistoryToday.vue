@@ -25,8 +25,12 @@
                 <q-item-label class="text-bold">{{
                   product.name
                 }}</q-item-label>
-                <q-item-label>
+                <q-item-label v-if="product.units == 'grams'">
                   Product Quantity: {{ product.quantity }}g
+                </q-item-label>
+
+                <q-item-label v-else>
+                  Pieces of product: {{ product.quantity }}
                 </q-item-label>
                 <q-item-label caption>
                   Proteins: {{ product.proteins }}g Carbohydrates:

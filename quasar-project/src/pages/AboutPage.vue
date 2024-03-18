@@ -12,6 +12,7 @@
         >
           <q-tab name="about" label="About" />
           <q-tab name="instructions" label="Instructions" />
+          <q-tab name="guide" label="Guide" />
         </q-tabs>
 
         <q-separator />
@@ -32,7 +33,6 @@
                   expand-separator
                   :label="item.title"
                   header-class="text-bold"
-                  
                 >
                   <q-card>
                     <q-card-section class="text-justify">
@@ -83,6 +83,133 @@
               </q-list>
             </q-scroll-area>
           </q-tab-panel>
+
+          <q-tab-panel name="guide">
+            <div class="text-h5 q-pb-md q-ml-xs">Guide</div>
+            <q-stepper v-model="step" vertical color="primary" animated>
+              <q-step
+                :name="1"
+                title="Add first product"
+                icon="add_circle"
+                :done="step > 1"
+              >
+                To begin using the application, either add your first product
+                from the existing database or manually input a product.
+
+                <q-stepper-navigation>
+                  <q-btn @click="step = 2" color="primary" label="Continue" />
+                </q-stepper-navigation>
+              </q-step>
+
+              <q-step
+                :name="2"
+                title="Add a product to the current day"
+                icon="inventory_2"
+                :done="step > 2"
+              >
+                Once you have added your first product to your own database, you
+                can add the product to the current day.
+
+                <q-stepper-navigation>
+                  <q-btn @click="step = 3" color="primary" label="Continue" />
+                  <q-btn
+                    flat
+                    @click="step = 1"
+                    color="primary"
+                    label="Back"
+                    class="q-ml-sm"
+                  />
+                </q-stepper-navigation>
+              </q-step>
+
+              <q-step
+                :name="3"
+                title="Checking History"
+                icon="history"
+                :done="step > 3"
+              >
+                After adding your first product to the current day, you unlock
+                additional functions such as checking the history for the
+                current day or from the beginning of using the application.
+
+                <q-stepper-navigation>
+                  <q-btn @click="step = 4" color="primary" label="Continue" />
+                  <q-btn
+                    flat
+                    @click="step = 2"
+                    color="primary"
+                    label="Back"
+                    class="q-ml-sm"
+                  />
+                </q-stepper-navigation>
+              </q-step>
+
+              <q-step
+                :name="4"
+                title="New Options"
+                icon="compare_arrows"
+                :done="step > 4"
+              >
+                Now you can also review the average calorie intake over the
+                week, month, or year, and compare it with your target calorie
+                intake.
+
+                <q-stepper-navigation>
+                  <q-btn @click="step = 5" color="primary" label="Continue" />
+                  <q-btn
+                    flat
+                    @click="step = 3"
+                    color="primary"
+                    label="Back"
+                    class="q-ml-sm"
+                  />
+                </q-stepper-navigation>
+              </q-step>
+
+              <q-step
+                :name="5"
+                title="More options"
+                icon="show_chart"
+                :done="step > 5"
+              >
+                What other options do you have? You can track calories using
+                charts. You can also input calories and macronutrients without
+                adding a product to the database - a useful feature if you only
+                want to log calories. You can also adjust your target
+                macronutrients.
+
+                <q-stepper-navigation>
+                  <q-btn @click="step = 6" color="primary" label="Continue" />
+                  <q-btn
+                    flat
+                    @click="step = 4"
+                    color="primary"
+                    label="Back"
+                    class="q-ml-sm"
+                  />
+                </q-stepper-navigation>
+              </q-step>
+
+              <q-step :name="6" title="Last step" icon="last_page">
+                Explore the about section and instructions section to learn more
+                about the application.
+                <q-stepper-navigation>
+                  <q-btn
+                    @click="router.go(-1)"
+                    color="primary"
+                    label="Finish"
+                  />
+                  <q-btn
+                    flat
+                    @click="step = 5"
+                    color="primary"
+                    label="Back"
+                    class="q-ml-sm"
+                  />
+                </q-stepper-navigation>
+              </q-step>
+            </q-stepper>
+          </q-tab-panel>
         </q-tab-panels>
       </q-card>
     </div>
@@ -93,8 +220,13 @@
 import { ref, computed } from "vue";
 import { customScrollBar } from "src/composables/ScrollBar.js";
 import { useQuasar } from "quasar";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
 
 const $q = useQuasar();
+
+const step = ref(1);
 
 const { thumbStyle, barStyle } = customScrollBar().useCustomScrollBar();
 
@@ -125,40 +257,41 @@ const aboutItems = ref([
 
 const instructionsButtons = ref([
   {
-    buttonName: "Add a New Product",
+    buttonName: "Add a new product",
     buttonFunction:
-      "Use this button to either open or close the form for adding a new product.",
+      "Use this button to open the form for adding a new product.",
   },
   {
-    buttonName: "Change Macronutrientst",
+    buttonName: "Add a new product using the product database",
+    buttonFunction:
+      "Use this button to search for and add a product from the pre-existing database of products.",
+  },
+  {
+    buttonName: "Change macronutrientst",
     buttonFunction: "Adjust your target macronutrients.",
   },
   {
-    buttonName: "Add Macronutrients",
+    buttonName: "Add macronutrients",
     buttonFunction:
       "Enter your custom macronutrients (without adding a specific product).",
   },
   {
-    buttonName: "Reset Day",
-    buttonFunction: "Clear macronutrient data for the current day.",
-  },
-  {
-    buttonName: "Check Current Day",
+    buttonName: "Check current day",
     buttonFunction: "View the history from the current day.",
   },
   {
-    buttonName: "Check History App",
+    buttonName: "Check history",
     buttonFunction: "Explore your history from the beginning.",
   },
   {
-    buttonName: "Logout",
-    buttonFunction: "sing out of your account.",
+    buttonName: "Reset day",
+    buttonFunction: "Clear macronutrient data for the current day.",
   },
 ]);
 
 const otherInstructions = ref([
   {
-    optionName: "Search Field",
+    optionName: "Search field",
     description: "Enter the product name to find specific items.",
   },
   {
